@@ -15,6 +15,7 @@ start() ->
     wxFrame:show(Frame),
     loop(Frame),
     wx:destroy(),
+    flush_messages(),
     ok.
 
 setup(Frame) ->
@@ -29,7 +30,8 @@ setup(Frame) ->
     wxFrame:setMenuBar(Frame, MenuBar),
 
     wxFrame:connect(Frame, command_menu_selected),
-    wxFrame:connect(Frame, close_window, [{skip, true}]).
+    %wxFrame:connect(Frame, close_window, [{skip, true}]).
+    wxFrame:connect(Frame, close_window).
 
 loop(Frame) ->
     receive
@@ -37,11 +39,21 @@ loop(Frame) ->
         #wx{obj = Frame, event = #wxClose{type = close_window}} ->
             io:format("close_window~n"),
             wxWindow:destroy(Frame);
-            %wxWindow:close(Frame, []);
         #wx{id = ?EXIT, event = #wxCommand{type = command_menu_selected}} ->
             io:format("Quit Menu~n"),
-            wxWindow:destroy(Frame);
+            wxWindow:close(Frame),
+            % wxWindow:close/1 simply generates a wxCloseEvent
+            % therefore need loop again and destroy window in close event handler
+            loop(Frame);
         Event ->
             io:format("Event ->~n~w~n", [Event]),
             loop(Frame)
         end.
+
+flush_messages() ->
+    receive
+        Message -> io:format("flush: ~w~n", [Message]),
+        flush_messages()
+    after
+        100 -> ok
+    end.
