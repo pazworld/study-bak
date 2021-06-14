@@ -22,15 +22,17 @@ setup(Frame) ->
 
     MenuBar = wxMenuBar:new(),
     File = wxMenu:new(),
+    Help = wxMenu:new(),
 
+    wxMenu:append(Help, ?ABOUT, "About MicroBlog"),
     wxMenu:append(File, ?EXIT, "Quit"),
 
     wxMenuBar:append(MenuBar, File, "&File"),
+    wxMenuBar:append(MenuBar, Help, "&Help"),
 
     wxFrame:setMenuBar(Frame, MenuBar),
 
     wxFrame:connect(Frame, command_menu_selected),
-    %wxFrame:connect(Frame, close_window, [{skip, true}]).
     wxFrame:connect(Frame, close_window).
 
 loop(Frame) ->
@@ -39,6 +41,14 @@ loop(Frame) ->
         #wx{obj = Frame, event = #wxClose{type = close_window}} ->
             io:format("close_window~n"),
             wxWindow:destroy(Frame);
+        #wx{id = ?ABOUT, event = #wxCommand{}} ->
+            Str = "MicroBlog is a minimal wxErlang example.",
+            MD = wxMessageDialog:new(Frame, Str,
+                [{style, ?wxOK bor ?wxICON_INFORMATION},
+                {caption, "About MicroBlog"}]),
+                wxDialog:showModal(MD),
+                wxDialog:destroy(MD),
+                loop(Frame);
         #wx{id = ?EXIT, event = #wxCommand{type = command_menu_selected}} ->
             io:format("Quit Menu~n"),
             wxWindow:close(Frame),
