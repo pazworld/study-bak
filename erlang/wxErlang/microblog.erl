@@ -32,12 +32,14 @@ setup(Frame) ->
 
     wxFrame:setMenuBar(Frame, MenuBar),
 
+    wxFrame:createStatusBar(Frame),
+    wxFrame:setStatusText(Frame, "Welcome to wxErlang"),
+
     wxFrame:connect(Frame, command_menu_selected),
     wxFrame:connect(Frame, close_window).
 
 loop(Frame) ->
     receive
-        %#wx{id = ?ABOUT, event = #wxCommand{}} ->
         #wx{event = #wxClose{}} ->
             io:format("close_window~n"),
             wxWindow:destroy(Frame);
