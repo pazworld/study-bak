@@ -11,21 +11,27 @@
 start() ->
     wx:new(),
     Frame = wxFrame:new(wx:null(), ?wxID_ANY, "MicroBlog"),
-    setup(Frame),
+    Text = wxTextCtrl:new(Frame, ?wxID_ANY,
+        [{value, "MiniBlog"},
+            {style, ?wxTE_MULTILINE}]),
+    setup(Frame, Text),
     wxFrame:show(Frame),
     loop(Frame),
     wx:destroy(),
     flush_messages(),
     ok.
 
-setup(Frame) ->
+setup(Frame, Text) ->
     setup_menubar(Frame),
 
     wxFrame:createStatusBar(Frame),
     wxFrame:setStatusText(Frame, "Welcome to wxErlang"),
 
     wxFrame:connect(Frame, command_menu_selected),
-    wxFrame:connect(Frame, close_window).
+    wxFrame:connect(Frame, close_window),
+
+    wxTextCtrl:setEditable(Text, false),
+    ok.
 
 setup_menubar(Frame) ->
     MenuBar = wxMenuBar:new(),
@@ -42,11 +48,11 @@ setup_menubar(Frame) ->
 
 loop(Frame) ->
     receive
-        #wx{event = #wxClose{}} ->
-            io:format("close_window~n"), wxWindow:destroy(Frame);
         #wx{id = ?ABOUT, event = #wxCommand{}} -> show_about(Frame), loop(Frame);
         #wx{id = ?EXIT, event = #wxCommand{}} ->
             io:format("Quit Menu~n"), wxWindow:destroy(Frame);
+        #wx{event = #wxClose{}} ->
+            io:format("close_window~n"), wxWindow:destroy(Frame);
         Event -> io:format("Event ->~n~w~n", [Event]), loop(Frame)
         end.
 
