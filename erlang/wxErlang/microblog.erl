@@ -38,7 +38,7 @@ setup(Frame) ->
 loop(Frame) ->
     receive
         %#wx{id = ?ABOUT, event = #wxCommand{}} ->
-        #wx{obj = Frame, event = #wxClose{type = close_window}} ->
+        #wx{event = #wxClose{}} ->
             io:format("close_window~n"),
             wxWindow:destroy(Frame);
         #wx{id = ?ABOUT, event = #wxCommand{}} ->
