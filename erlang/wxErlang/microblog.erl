@@ -43,18 +43,11 @@ setup_menubar(Frame) ->
 loop(Frame) ->
     receive
         #wx{event = #wxClose{}} ->
-            io:format("close_window~n"),
-            wxWindow:destroy(Frame);
+            io:format("close_window~n"), wxWindow:destroy(Frame);
         #wx{id = ?ABOUT, event = #wxCommand{}} -> show_about(Frame), loop(Frame);
-        #wx{id = ?EXIT, event = #wxCommand{type = command_menu_selected}} ->
-            io:format("Quit Menu~n"),
-            wxWindow:close(Frame),
-            % wxWindow:close/1 simply generates a wxCloseEvent
-            % therefore need loop again and destroy window in close event handler
-            loop(Frame);
-        Event ->
-            io:format("Event ->~n~w~n", [Event]),
-            loop(Frame)
+        #wx{id = ?EXIT, event = #wxCommand{}} ->
+            io:format("Quit Menu~n"), wxWindow:destroy(Frame);
+        Event -> io:format("Event ->~n~w~n", [Event]), loop(Frame)
         end.
 
 show_about(Frame) ->
