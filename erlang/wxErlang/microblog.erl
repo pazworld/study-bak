@@ -19,7 +19,15 @@ start() ->
     ok.
 
 setup(Frame) ->
+    setup_menubar(Frame),
 
+    wxFrame:createStatusBar(Frame),
+    wxFrame:setStatusText(Frame, "Welcome to wxErlang"),
+
+    wxFrame:connect(Frame, command_menu_selected),
+    wxFrame:connect(Frame, close_window).
+
+setup_menubar(Frame) ->
     MenuBar = wxMenuBar:new(),
     File = wxMenu:new(),
     Help = wxMenu:new(),
@@ -30,27 +38,14 @@ setup(Frame) ->
     wxMenuBar:append(MenuBar, File, "&File"),
     wxMenuBar:append(MenuBar, Help, "&Help"),
 
-    wxFrame:setMenuBar(Frame, MenuBar),
-
-    wxFrame:createStatusBar(Frame),
-    wxFrame:setStatusText(Frame, "Welcome to wxErlang"),
-
-    wxFrame:connect(Frame, command_menu_selected),
-    wxFrame:connect(Frame, close_window).
+    wxFrame:setMenuBar(Frame, MenuBar).
 
 loop(Frame) ->
     receive
         #wx{event = #wxClose{}} ->
             io:format("close_window~n"),
             wxWindow:destroy(Frame);
-        #wx{id = ?ABOUT, event = #wxCommand{}} ->
-            Str = "MicroBlog is a minimal wxErlang example.",
-            MD = wxMessageDialog:new(Frame, Str,
-                [{style, ?wxOK bor ?wxICON_INFORMATION},
-                {caption, "About MicroBlog"}]),
-                wxDialog:showModal(MD),
-                wxDialog:destroy(MD),
-                loop(Frame);
+        #wx{id = ?ABOUT, event = #wxCommand{}} -> show_about(Frame), loop(Frame);
         #wx{id = ?EXIT, event = #wxCommand{type = command_menu_selected}} ->
             io:format("Quit Menu~n"),
             wxWindow:close(Frame),
@@ -61,6 +56,14 @@ loop(Frame) ->
             io:format("Event ->~n~w~n", [Event]),
             loop(Frame)
         end.
+
+show_about(Frame) ->
+            Str = "MicroBlog is a minimal wxErlang example.",
+            MD = wxMessageDialog:new(Frame, Str,
+                [{style, ?wxOK bor ?wxICON_INFORMATION},
+                {caption, "About MicroBlog"}]),
+                wxDialog:showModal(MD),
+                wxDialog:destroy(MD).
 
 flush_messages() ->
     receive
