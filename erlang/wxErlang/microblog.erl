@@ -7,6 +7,7 @@
 
 -define(ABOUT, ?wxID_ABOUT).
 -define(EXIT, ?wxID_EXIT).
+-define(APPEND, 131).
 
 start() ->
     wx:new(),
@@ -16,7 +17,7 @@ start() ->
             {style, ?wxTE_MULTILINE}]),
     setup(Frame, Text),
     wxFrame:show(Frame),
-    loop(Frame),
+    loop(Frame, Text),
     wx:destroy(),
     flush_messages(),
     ok.
@@ -36,25 +37,40 @@ setup(Frame, Text) ->
 setup_menubar(Frame) ->
     MenuBar = wxMenuBar:new(),
     File = wxMenu:new(),
+    Edit = wxMenu:new(),
     Help = wxMenu:new(),
 
     wxMenu:append(Help, ?ABOUT, "About MicroBlog"),
     wxMenu:append(File, ?EXIT, "Quit"),
+    wxMenu:append(Edit, ?APPEND, "Add en&try\tCtrl-T"),
 
     wxMenuBar:append(MenuBar, File, "&File"),
+    wxMenuBar:append(MenuBar, Edit, "&Edit"),
     wxMenuBar:append(MenuBar, Help, "&Help"),
 
     wxFrame:setMenuBar(Frame, MenuBar).
 
-loop(Frame) ->
+loop(Frame, Text) ->
     receive
-        #wx{id = ?ABOUT, event = #wxCommand{}} -> show_about(Frame), loop(Frame);
+        #wx{id = ?ABOUT, event = #wxCommand{}} -> show_about(Frame), loop(Frame, Text);
         #wx{id = ?EXIT, event = #wxCommand{}} ->
             io:format("Quit Menu~n"), wxWindow:destroy(Frame);
         #wx{event = #wxClose{}} ->
             io:format("close_window~n"), wxWindow:destroy(Frame);
-        Event -> io:format("Event ->~n~w~n", [Event]), loop(Frame)
-        end.
+        #wx{id = ?APPEND, event = #wxCommand{}} ->
+            Prompt = "Please enter text here.",
+            MD = wxTextEntryDialog:new(Frame, Prompt,
+                [{caption, "New blog entry."}]),
+            case wxTextEntryDialog:showModal(MD) of
+                ?wxID_OK ->
+                    Str = wxTextEntryDialog:getValue(MD),
+                    wxTextCtrl:appendText(Text, [10] ++ dateNow() ++ Str);
+                _ -> ok
+            end,
+            wxDialog:destroy(MD),
+            loop(Frame, Text);
+        Event -> io:format("Event ->~n~w~n", [Event]), loop(Frame, Text)
+    end.
 
 show_about(Frame) ->
             Str = "MicroBlog is a minimal wxErlang example.",
@@ -63,6 +79,11 @@ show_about(Frame) ->
                 {caption, "About MicroBlog"}]),
                 wxDialog:showModal(MD),
                 wxDialog:destroy(MD).
+
+dateNow() ->
+    {{Yea,Mon,Day},{Hou,Min,Sec}} = erlang:localtime(),
+    io_lib:format("~4..0B-~2..0B-~2..0B ~2..0B:~2..0B:~2..0B",
+        [Yea,Mon,Day,Hou,Min,Sec]).
 
 flush_messages() ->
     receive
