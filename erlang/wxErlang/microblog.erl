@@ -58,17 +58,7 @@ loop(Frame, Text) ->
         #wx{event = #wxClose{}} ->
             io:format("close_window~n"), wxWindow:destroy(Frame);
         #wx{id = ?APPEND, event = #wxCommand{}} ->
-            Prompt = "Please enter text here.",
-            MD = wxTextEntryDialog:new(Frame, Prompt,
-                [{caption, "New blog entry."}]),
-            case wxTextEntryDialog:showModal(MD) of
-                ?wxID_OK ->
-                    Str = wxTextEntryDialog:getValue(MD),
-                    wxTextCtrl:appendText(Text, [10] ++ dateNow() ++ Str);
-                _ -> ok
-            end,
-            wxDialog:destroy(MD),
-            loop(Frame, Text);
+            append_input_entry(Frame, Text), loop(Frame, Text);
         Event -> io:format("Event ->~n~w~n", [Event]), loop(Frame, Text)
     end.
 
@@ -79,6 +69,18 @@ show_about(Frame) ->
                 {caption, "About MicroBlog"}]),
                 wxDialog:showModal(MD),
                 wxDialog:destroy(MD).
+
+append_input_entry(Frame, Text) ->
+        Prompt = "Please enter text here.",
+        MD = wxTextEntryDialog:new(Frame, Prompt,
+            [{caption, "New blog entry."}]),
+        case wxTextEntryDialog:showModal(MD) of
+            ?wxID_OK ->
+                Str = wxTextEntryDialog:getValue(MD),
+                wxTextCtrl:appendText(Text, [10] ++ dateNow() ++ " " ++ Str);
+            _ -> ok
+        end,
+        wxDialog:destroy(MD).
 
 dateNow() ->
     {{Yea,Mon,Day},{Hou,Min,Sec}} = erlang:localtime(),
