@@ -8,6 +8,7 @@
 -define(ABOUT, ?wxID_ABOUT).
 -define(EXIT, ?wxID_EXIT).
 -define(APPEND, 131).
+-define(UNDO, 132).
 
 start() ->
     wx:new(),
@@ -43,6 +44,7 @@ setup_menubar(Frame) ->
     wxMenu:append(Help, ?ABOUT, "About MicroBlog"),
     wxMenu:append(File, ?EXIT, "Quit"),
     wxMenu:append(Edit, ?APPEND, "Add en&try\tCtrl-T"),
+    wxMenu:append(Edit, ?UNDO, "Undo latest\tCtrl-U"),
 
     wxMenuBar:append(MenuBar, File, "&File"),
     wxMenuBar:append(MenuBar, Edit, "&Edit"),
@@ -59,6 +61,8 @@ loop(Frame, Text) ->
             io:format("close_window~n"), wxWindow:destroy(Frame);
         #wx{id = ?APPEND, event = #wxCommand{}} ->
             append_input_entry(Frame, Text), loop(Frame, Text);
+        #wx{id = ?UNDO, event = #wxCommand{}} ->
+            undo_last_entry(Frame, Text), loop(Frame, Text);
         Event -> io:format("Event ->~n~w~n", [Event]), loop(Frame, Text)
     end.
 
@@ -82,10 +86,21 @@ append_input_entry(Frame, Text) ->
     end,
     wxDialog:destroy(MD).
 
+undo_last_entry(Frame, Text) ->
+    {StartPos, EndPos} = lastLineRange(Text),
+    wxTextCtrl:remove(Text, StartPos - 2, EndPos + 1).
+
 dateNow() ->
     {{Yea,Mon,Day},{Hou,Min,Sec}} = erlang:localtime(),
     io_lib:format("~4..0B-~2..0B-~2..0B ~2..0B:~2..0B:~2..0B",
         [Yea,Mon,Day,Hou,Min,Sec]).
+
+lastLineRange(Text) ->
+    LineNum = wxTextCtrl:getNumberOfLines(Text),
+    LastLineLength = wxTextCtrl:getLineLength(Text, LineNum),
+    EndPos = wxTextCtrl:getLastPosition(Text),
+    StartPos = EndPos - LastLineLength,
+    {StartPos, EndPos}.
 
 flush_messages() ->
     receive
