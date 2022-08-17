@@ -23,11 +23,11 @@ group_vals([A,B,X|Rest], Acc) ->
 
 go_map({A, B, X}, {{SumA, ListA}, {SumB, ListB}}) ->
     NewA = if SumA =< SumB + X -> {SumA + A, [{a, A} | ListA]}
-           ;  SumA >  SumB + X -> {SumB + X + A, [{a, A}, {x, X} | ListA]} end,
+           ;  SumA >  SumB + X -> {SumB + X + A, [{a, A}, {x, X} | ListB]} end,
     NewB = if SumB =< SumA + X -> {SumB + B, [{b, B} | ListB]}
-           ;  SumB >  SumA + X -> {SumA + X + B, [{b, B}, {x, X} | ListB]} end,
+           ;  SumB >  SumA + X -> {SumA + X + B, [{b, B}, {x, X} | ListA]} end,
     {NewA, NewB}.
 
 test() ->
     {{10, [{a, 10}]}, {15, [{b, 15}]}} = go_map({10, 15, 0}, {{0, []}, {0, []}}),
-    {{15, [{a, 5}, {a, 10}]}, {14, [{b, 1}, {x, 3}, {b, 15}]}} = go_map({5, 1, 3}, {{10, [{a, 10}]}, {15, [{b, 15}]}}).
+    {{15, [{a, 5}, {a, 10}]}, {14, [{b, 1}, {x, 3}, {a, 10}]}} = go_map({5, 1, 3}, {{10, [{a, 10}]}, {15, [{b, 15}]}}).
