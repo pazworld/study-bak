@@ -1,0 +1,6 @@
+{
+    "name": "ErlangStudy",
+    "dockerFile": "../docker/Dockerfile",
+    #"forwardPorts": [8080],
+    "remoteUser": "erl"
+}
