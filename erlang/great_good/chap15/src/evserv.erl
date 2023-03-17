@@ -40,7 +40,22 @@ loop(S = #state{}) ->
                 false ->
                     Pid ! {MsgRef, {error, bad_timeout}},
                     loop(S)
-            end
+            end;
+        {done, Name} ->
+            E = orddict:fetch(Name, S#state.events),
+            send_to_clients({done, E#event.name, E#event.description},
+                S#state.clients),
+            NewEvents = orddict:erase(Name, S#state.events),
+            loop(S#state{events=NewEvents});
+        shutdown ->
+            exit(shutdown);
+        {'DOWN', Ref, process, _Pid, _Reason} ->
+            loop(S#state{clients=orddict:erase(Ref, S#state.clients)});
+        code_change ->
+            ?MODULE:loop(S);
+        Unknown ->
+            io:format("Unknown message: ~p~n", [Unknown]),
+            loop(S)
     end.
 
 valid_datetime({Date,Time}) ->
@@ -58,3 +73,6 @@ valid_time(H,M,S) when H >= 0, H < 24,
                        M >= 0, M < 60,
                        S >= 0, S < 60 -> true;
 valid_time(_,_,_) -> false.
+
+send_to_clients(Msg, ClientDict) ->
+    orddict:map(fun(_Ref, Pid) -> Pid ! Msg end, ClientDict).
