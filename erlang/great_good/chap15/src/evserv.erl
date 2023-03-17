@@ -41,6 +41,16 @@ loop(S = #state{}) ->
                     Pid ! {MsgRef, {error, bad_timeout}},
                     loop(S)
             end;
+        {Pid, MsgRef, {cancel, Name}} ->
+            Events = case orddict:find(Name, S#state.events) of
+                {ok, E} ->
+                    event:cancel(E#event.pid),
+                    orddict:erase(Name, S#state.events);
+                error ->
+                    S#state.events
+                end,
+            Pid ! {MsgRef, ok},
+            loop(S#state{events=Events});
         {done, Name} ->
             E = orddict:fetch(Name, S#state.events),
             send_to_clients({done, E#event.name, E#event.description},
@@ -77,13 +87,24 @@ valid_time(_,_,_) -> false.
 send_to_clients(Msg, ClientDict) ->
     orddict:map(fun(_Ref, Pid) -> Pid ! Msg end, ClientDict).
 
+start() ->
+    register(?MODULE, Pid=spawn(?MODULE, init, [])),
+    Pid.
+
+start_link() ->
+    register(?MODULE, Pid=spawn_link(?MODULE, init, [])),
+    Pid.
+
+terminame() ->
+    ?MODULE ! shutdown.
+
 subscribe(Pid) ->
     Ref = erlang:monitor(process, whereis(?MODULE)),
     ?MODULE ! {self(), Ref, {subscribe, Pid}},
     receive
         {Ref, ok} ->
             {ok, Ref};
-        {'DOWN', Ref, process, _Pid, _Reason} ->
+        {'DOWN', Ref, process, _Pid, Reason} ->
             {error, Reason}
     after 5000 ->
         {error, timeout}
@@ -124,3 +145,6 @@ listen(Delay) ->
     after Delay * 1000 ->
         []
     end.
+
+upgrade() ->
+    ?MODULE ! code_change.
