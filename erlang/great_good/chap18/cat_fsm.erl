@@ -1,5 +1,5 @@
 -module(cat_fsm).
--export([start/0, event/2]).
+-export([start/0, event/2, test/0]).
 
 start() ->
     spawn(fun() -> dont_give_crap() end).
@@ -20,3 +20,16 @@ dont_give_crap() ->
     end,
     io:format("Switching to 'dont_give_crap' state~n"),
     dont_give_crap().
+
+test() ->
+    Cat = start(),
+    io:format("> pet~n"),
+    event(Cat, pet),
+    timer:sleep(1000),
+    io:format("> love~n"),
+    event(Cat, love),
+    timer:sleep(1000),
+    io:format("> cherish~n"),
+    event(Cat, cherish),
+    timer:sleep(1000),
+    catch exit(Cat).
